@@ -2,7 +2,7 @@ Cleanup comes later. functionality first. \
 Yes, anger motivates a shit ton
 
 
-TODO:
+TODO: \
 [x] Removed UI \
 [x] Added REST API \
 [x] Camera streams \
