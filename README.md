@@ -6,6 +6,6 @@ TODO: \
 [x] Removed UI \
 [x] Added REST API \
 [x] Camera streams \
-[ ] Calibration get \
+[x] Calibration get \
 [ ] Crop/setting setting from rust \
 [ ] Profit?
