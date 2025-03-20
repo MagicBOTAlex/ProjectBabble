@@ -16,12 +16,7 @@ class PB_ComboAPI:
         self.babbleCam.start();
 
     async def raw_feed(self):
-        logger.info(f"Getting raw stream. Object is: {self.babbleCam.babble_cnn.raw_visualizer}")
-        if self.babbleCam.babble_cnn.raw_visualizer.image_queue.empty():
-            logger.info("Image queue is empty!")
-        # return self.babbleCam.raw_visualizer
-        # print(self.babbleCam.raw_visualizer)
-        return "ok"
+        return self.babbleCam.babble_cnn.raw_visualizer.video_feed()
     
     async def cropped_feed(self):
         return "balls"
