@@ -69,55 +69,6 @@ def timerResolution(toggle):
         else:
             winmm.timeEndPeriod(1)
 
-
-async def check_for_updates(config, notification_manager):
-    if config.settings.gui_update_check:
-        try:
-            response = requests.get(
-                "https://api.github.com/repos/Project-Babble/ProjectBabble/releases/latest",
-                timeout=10,  # Add timeout
-            )
-            response.raise_for_status()  # Will raise exception for HTTP errors
-
-            data = response.json()
-            latestversion = data.get("name")
-
-            if not latestversion:
-                print(
-                    f'[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("babble.invalidVersionFormat")}'
-                )
-                return
-
-            if appversion == latestversion:
-                print(
-                    f'\033[92m[{lang._instance.get_string("log.info")}] {lang._instance.get_string("babble.latestVersion")}! [{latestversion}]\033[0m'
-                )
-            else:
-                print(
-                    f'\033[93m[{lang._instance.get_string("log.info")}] {lang._instance.get_string("babble.needUpdateOne")} [{appversion}] {lang._instance.get_string("babble.needUpdateTwo")} [{latestversion}] {lang._instance.get_string("babble.needUpdateThree")}.\033[0m'
-                )
-                await notification_manager.show_notification(
-                    appversion, latestversion, page_url
-                )
-
-        except requests.exceptions.Timeout:
-            print(
-                f'[{lang._instance.get_string("log.info")}] {lang._instance.get_string("babble.updateTimeout")}'
-            )
-        except requests.exceptions.HTTPError as e:
-            print(
-                f'[{lang._instance.get_string("log.info")}] {lang._instance.get_string("babble.updateHttpError")}: {e}'
-            )
-        except requests.exceptions.ConnectionError:
-            print(
-                f'[{lang._instance.get_string("log.info")}] {lang._instance.get_string("babble.noInternet")}'
-            )
-        except Exception as e:
-            print(
-                f'[{lang._instance.get_string("log.info")}] {lang._instance.get_string("babble.updateCheckFailed")}: {e}'
-            )
-
-
 class ThreadManager:
     def __init__(self, cancellation_event):
         """Initialize ThreadManager with a cancellation event for signaling threads."""
