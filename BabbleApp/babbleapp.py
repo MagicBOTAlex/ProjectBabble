@@ -205,81 +205,6 @@ async def async_main():
         CalibSettingsWidget(Tab.CALIBRATION, config, osc_queue),
     ]
 
-    layout = [
-        [
-            sg.Radio(
-                lang._instance.get_string("babble.camPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.CAM),
-                key=UIConstants.CAM_RADIO_NAME,
-            ),
-            sg.Radio(
-                lang._instance.get_string("babble.settingsPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.SETTINGS),
-                key=UIConstants.SETTINGS_RADIO_NAME,
-            ),
-            sg.Radio(
-                lang._instance.get_string("babble.algoSettingsPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.ALGOSETTINGS),
-                key=UIConstants.ALGO_SETTINGS_RADIO_NAME,
-            ),
-            sg.Radio(
-                lang._instance.get_string("babble.calibrationPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.CALIBRATION),
-                key=UIConstants.CALIB_SETTINGS_RADIO_NAME,
-            ),
-        ],
-        [
-            sg.Column(
-                cams[0].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.CAM_NAME,
-                visible=(config.cam_display_id in [Tab.CAM]),
-                background_color=bg_color_highlight,
-            ),
-            sg.Column(
-                settings[0].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.SETTINGS_NAME,
-                visible=(config.cam_display_id in [Tab.SETTINGS]),
-                background_color=bg_color_highlight,
-            ),
-            sg.Column(
-                settings[1].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.ALGO_SETTINGS_NAME,
-                visible=(config.cam_display_id in [Tab.ALGOSETTINGS]),
-                background_color=bg_color_highlight,
-            ),
-            sg.Column(
-                settings[2].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.CALIB_SETTINGS_NAME,
-                visible=(config.cam_display_id in [Tab.CALIBRATION]),
-                background_color=bg_color_highlight,
-            ),
-        ],
-        # Keep at bottom!
-        [
-            sg.Text(
-                f'- - -  {lang._instance.get_string("general.windowFocus")}  - - -',
-                key="-WINFOCUS-",
-                background_color=bg_color_clear,
-                text_color="#F0F0F0",
-                justification="center",
-                expand_x=True,
-                visible=False,
-            )
-        ],
-    ]
-
     if config.cam_display_id in [Tab.CAM]:
         cams[0].start()
     if config.cam_display_id in [Tab.SETTINGS]:
@@ -297,14 +222,6 @@ async def async_main():
         )
         thread_manager.add_thread(osc_receiver_thread, shutdown_obj=osc_receiver)
         ROSC = True
-
-    # Create the window
-    window = sg.Window(
-        f"{AppConstants.VERSION}",
-        layout,
-        icon=os.path.join("Images", "logo.ico"),
-        background_color=bg_color_clear,
-    )
 
     # Run the main loop
     await main_loop(cams)
