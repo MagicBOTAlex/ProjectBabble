@@ -307,7 +307,7 @@ async def async_main():
     )
 
     # Run the main loop
-    await main_loop(window, config, cams, settings, thread_manager)
+    await main_loop(cams)
 
     # Cleanup after main loop exits
     timerResolution(False)
@@ -316,20 +316,12 @@ async def async_main():
     )
 
 
-async def main_loop(window, config, cams, settings, thread_manager):
-    tint = AppConstants.DEFAULT_WINDOW_FOCUS_REFRESH
-    fs = False
+async def main_loop(cams):
 
     while True:
-        event, values = window.read(timeout=tint)
-
-        # Otherwise, render all
         for cam in cams:
             if cam.started():
-                cam.render(window, event, values)
-        for setting in settings:
-            if setting.started():
-                setting.render(window, event, values)
+                cam.render(None, None, None)
 
         # Rather than await asyncio.sleep(0), yield control periodically
         await asyncio.sleep(0.001)  # Small sleep to allow other tasks to rundef main():
