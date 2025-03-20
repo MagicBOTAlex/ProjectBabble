@@ -16,8 +16,8 @@ Additional contributors: RamesTheGeneric (dataset synthesizer), dfgHiatus (local
 Copyright (c) 2023 Project Babble <3
 """
 
+import ctypes
 import os
-import FreeSimpleGUI as sg
 import queue
 import requests
 import threading
@@ -35,7 +35,6 @@ from calib_settings_widget import CalibSettingsWidget
 from utils.misc_utils import ensurePath, os_type, bg_color_highlight, bg_color_clear
 from lang_manager import LocaleStringManager as lang
 from logger import setup_logging
-from constants import UIConstants, AppConstants
 
 winmm = None
 
@@ -132,23 +131,30 @@ class ThreadManager:
         thread.start()
         self.logger.debug(f"Started thread: {thread.name}")
 
+    def kill_thread(self, thread):
+        if not thread.is_alive():
+            return
+
+        # Screw læinux support right now. I love linux mint, but i'm angry
+        tid = ctypes.c_long(thread.ident)
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+            tid, ctypes.py_object(SystemExit)
+        )
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+            raise SystemError("Failed to kill thread")
+
     def shutdown_all(self, timeout=5.0):
         """Shutdown all managed threads with a configurable timeout."""
         self.logger.info("Initiiating shutdown of all threads")
         self.cancellation_event.set()  # Signal all threads to stop
 
+
+        time.sleep(1000) # Gonna give them 1 fucking second to shutdown, or else off with their heads
+
         # Call shutdown methods on associated objects if available
         for thread, shutdown_obj in self.threads:
-            if (
-                shutdown_obj
-                and hasattr(shutdown_obj, "shutdown")
-                and callable(shutdown_obj.shutdown)
-            ):
-                try:
-                    self.logger.debug(f"Calling shutdown on {shutdown_obj}")
-                    shutdown_obj.shutdown()
-                except Exception as e:
-                    self.logger.error(f"Error shutting down {shutdown_obj}: {e}")
+            self.kill_thread(thread)
 
         # Join threads with the specified timeout
         for thread, _ in self.threads:
