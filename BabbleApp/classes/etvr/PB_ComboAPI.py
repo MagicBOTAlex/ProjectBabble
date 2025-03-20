@@ -19,12 +19,10 @@ class PB_ComboAPI:
         return self.babbleCam.babble_cnn.raw_visualizer.video_feed()
     
     async def cropped_feed(self):
-        return "balls"
-        return self.babbleCam.cropped_visualizer
+        return self.babbleCam.cropped_visualizer.video_feed()
 
     async def processed_feed(self):
-        # return self.babbleCam.processed_visualizer
-        return "balls"
+        return self.babbleCam.babble_cnn.processed_visualizer.video_feed()
 
     def add_routes(self) -> None:
         # region: Image streaming endpoints

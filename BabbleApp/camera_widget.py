@@ -61,9 +61,11 @@ class CameraWidget:
         # Set the event until start is called, otherwise we can block if shutdown is called.
         self.cancellation_event.set()
         self.capture_event = Event()
-        self.capture_queue = Queue(maxsize=2)
-        self.roi_queue = Queue(maxsize=2)
+        self.capture_queue = Queue(maxsize=10)
+        self.roi_queue = Queue(maxsize=10)
         self.image_queue = Queue(maxsize=500) # This is needed to prevent the UI from freezing during widget changes. (Alex: doens't work when camera disconnected. I'm still mad)
+
+        self.cropped_visualizer = Visualizer(self.roi_queue)
 
         self.babble_cnn = BabbleProcessor(
             self.config,

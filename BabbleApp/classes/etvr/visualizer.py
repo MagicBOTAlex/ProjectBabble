@@ -16,7 +16,7 @@ class Visualizer:
     def gen_frame(self):
         while self.running:
             try:
-                (frame, cam_info, fps) = self.image_queue.get(timeout=1)
+                frame = self.image_queue.get(timeout=1)[0]
             except Exception:
                 frame = OFLINE_IMAGE
             ret, frame = cv2.imencode(".jpg", frame)
