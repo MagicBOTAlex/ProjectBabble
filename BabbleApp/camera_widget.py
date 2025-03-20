@@ -297,8 +297,4 @@ class CameraWidget:
         self.camera_thread.join()
 
     def render(self, window, event, values):
-        
-        window[self.gui_roi_message].update(visible=False)
-        (maybe_image, cam_info) = self.image_queue.get(block=False)
-        imgbytes = cv2.imencode(".ppm", maybe_image)[1].tobytes()
-        window[self.gui_tracking_image].update(data=imgbytes)
+        print(self.image_queue.qsize())
