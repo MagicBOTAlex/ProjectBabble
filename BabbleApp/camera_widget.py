@@ -1,7 +1,6 @@
 from collections import deque
 from queue import Queue, Empty
 from threading import Event, Thread
-import FreeSimpleGUI as sg
 from classes.etvr.visualizer import Visualizer
 import cv2
 import os
@@ -62,10 +61,8 @@ class CameraWidget:
         self.cancellation_event.set()
         self.capture_event = Event()
         self.capture_queue = Queue(maxsize=10)
-        self.roi_queue = Queue(maxsize=10)
         self.image_queue = Queue(maxsize=500) # This is needed to prevent the UI from freezing during widget changes. (Alex: doens't work when camera disconnected. I'm still mad)
 
-        self.cropped_visualizer = Visualizer(self.roi_queue)
 
         self.babble_cnn = BabbleProcessor(
             self.config,
@@ -89,175 +86,6 @@ class CameraWidget:
             self.capture_queue,
             self.settings,
         )
-
-        button_color = "#539e8a"
-        self.roi_layout = [
-            [
-                sg.Button(
-                    lang._instance.get_string("camera.selectEntireFrame"),
-                    key=self.gui_autoroi,
-                    button_color=button_color,
-                    tooltip=lang._instance.get_string(
-                        "camera.selectEntireFrameTooltip"
-                    ),
-                ),
-            ],
-            [
-                sg.Graph(
-                    (MAX_RESOLUTION, MAX_RESOLUTION),
-                    (0, MAX_RESOLUTION),
-                    (MAX_RESOLUTION, 0),
-                    key=self.gui_roi_selection,
-                    drag_submits=True,
-                    enable_events=True,
-                    background_color=bg_color_highlight,
-                )
-            ],
-        ]
-
-        # Define the window's contents
-        self.tracking_layout = [
-            [
-                sg.Text(
-                    lang._instance.get_string("camera.rotation"),
-                    background_color=bg_color_highlight,
-                ),
-                sg.Slider(
-                    range=(0, 360),
-                    default_value=self.config.rotation_angle,
-                    orientation="h",
-                    key=self.gui_rotation_slider,
-                    background_color=bg_color_highlight,
-                    tooltip=lang._instance.get_string("camera.rotationTooltip"),
-                ),
-            ],
-            [
-                sg.Button(
-                    lang._instance.get_string("camera.startCalibration"),
-                    key=self.gui_restart_calibration,
-                    button_color=button_color,
-                    tooltip=lang._instance.get_string("camera.startCalibrationTooltip"),
-                    disabled=not self.settings_config.use_calibration,
-                ),
-                sg.Button(
-                    lang._instance.get_string("camera.stopCalibration"),
-                    key=self.gui_stop_calibration,
-                    button_color=button_color,
-                    tooltip=lang._instance.get_string("camera.startCalibrationTooltip"),
-                    disabled=not self.settings_config.use_calibration,
-                ),
-            ],
-            [
-                sg.Checkbox(
-                    f'{lang._instance.get_string("camera.enableCalibration")}:',
-                    default=self.settings_config.use_calibration,
-                    key=self.use_calibration,
-                    background_color=bg_color_highlight,
-                    tooltip=lang._instance.get_string(
-                        "camera.enableCalibrationTooltip"
-                    ),
-                    enable_events=True,
-                ),
-            ],
-            [
-                sg.Text(
-                    f'{lang._instance.get_string("camera.mode")}:',
-                    background_color=bg_color_highlight,
-                ),
-                sg.Text(
-                    lang._instance.get_string("camera.calibrating"),
-                    key=self.gui_mode_readout,
-                    background_color=button_color,
-                ),
-                sg.Text(
-                    "", key=self.gui_tracking_fps, background_color=bg_color_highlight
-                ),
-                sg.Text(
-                    "", key=self.gui_tracking_bps, background_color=bg_color_highlight
-                ),
-            ],
-            [
-                sg.Checkbox(
-                    f'{lang._instance.get_string("camera.verticalFlip")}:',
-                    default=self.config.gui_vertical_flip,
-                    key=self.gui_vertical_flip,
-                    background_color=bg_color_highlight,
-                    tooltip=f'{lang._instance.get_string("camera.verticalFlipTooltip")}.',
-                ),
-                sg.Checkbox(
-                    f'{lang._instance.get_string("camera.horizontalFlip")}:',
-                    default=self.config.gui_horizontal_flip,
-                    key=self.gui_horizontal_flip,
-                    background_color=bg_color_highlight,
-                    tooltip=f'{lang._instance.get_string("camera.horizontalFlipTooltip")}:',
-                ),
-            ],
-            [sg.Image(filename="", key=self.gui_tracking_image)],
-            [
-                sg.Text(
-                    f'{lang._instance.get_string("camera.crop")}:',
-                    key=self.gui_roi_message,
-                    background_color=bg_color_highlight,
-                    visible=False,
-                ),
-            ],
-        ]
-
-        self.widget_layout = [
-            [
-                sg.Text(
-                    lang._instance.get_string("camera.cameraAddress"),
-                    background_color=bg_color_highlight,
-                ),
-                sg.InputCombo(
-                    values=self.camera_list,
-                    default_value=self.config.capture_source,
-                    key=self.gui_camera_addr,
-                    tooltip=lang._instance.get_string("camera.cameraAddressTooltip"),
-                    enable_events=True,
-                    size=(20,0),
-                ),
-                sg.Button(
-                    lang._instance.get_string("camera.refreshCameraList"),
-                    key=self.gui_refresh_button,
-                    button_color=button_color,
-                ),
-            ],
-            [
-                sg.Button(
-                    lang._instance.get_string("camera.saveAndRestartTracking"),
-                    key=self.gui_save_tracking_button,
-                    button_color=button_color,
-                ),
-            ],
-            [
-                sg.Button(
-                    lang._instance.get_string("camera.trackingMode"),
-                    key=self.gui_tracking_button,
-                    button_color=button_color,
-                    tooltip=f'{lang._instance.get_string("camera.trackingModeTooltip")}.',
-                ),
-                sg.Button(
-                    lang._instance.get_string("camera.croppingMode"),
-                    key=self.gui_roi_button,
-                    button_color=button_color,
-                    tooltip=f'{lang._instance.get_string("camera.croppingModeToolTip")}.',
-                ),
-            ],
-            [
-                sg.Column(
-                    self.tracking_layout,
-                    key=self.gui_tracking_layout,
-                    background_color=bg_color_highlight,
-                ),
-                sg.Column(
-                    self.roi_layout,
-                    key=self.gui_roi_layout,
-                    background_color=bg_color_highlight,
-                    visible=False,
-                ),
-            ],
-        ]
 
         self.x0, self.y0 = None, None
         self.x1, self.y1 = None, None
