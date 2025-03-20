@@ -185,7 +185,6 @@ async def async_main():
     # logging.basicConfig(filename='BabbleApp.log', filemode='w', encoding='utf-8', level=logging.INFO)
 
     cancellation_event = threading.Event()
-    ROSC = False
 
     timerResolution(True)
 
@@ -205,80 +204,6 @@ async def async_main():
         CalibSettingsWidget(Tab.CALIBRATION, config, osc_queue),
     ]
 
-    layout = [
-        [
-            sg.Radio(
-                lang._instance.get_string("babble.camPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.CAM),
-                key=UIConstants.CAM_RADIO_NAME,
-            ),
-            sg.Radio(
-                lang._instance.get_string("babble.settingsPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.SETTINGS),
-                key=UIConstants.SETTINGS_RADIO_NAME,
-            ),
-            sg.Radio(
-                lang._instance.get_string("babble.algoSettingsPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.ALGOSETTINGS),
-                key=UIConstants.ALGO_SETTINGS_RADIO_NAME,
-            ),
-            sg.Radio(
-                lang._instance.get_string("babble.calibrationPage"),
-                "TABSELECTRADIO",
-                background_color=bg_color_clear,
-                default=(config.cam_display_id == Tab.CALIBRATION),
-                key=UIConstants.CALIB_SETTINGS_RADIO_NAME,
-            ),
-        ],
-        [
-            sg.Column(
-                cams[0].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.CAM_NAME,
-                visible=(config.cam_display_id in [Tab.CAM]),
-                background_color=bg_color_highlight,
-            ),
-            sg.Column(
-                settings[0].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.SETTINGS_NAME,
-                visible=(config.cam_display_id in [Tab.SETTINGS]),
-                background_color=bg_color_highlight,
-            ),
-            sg.Column(
-                settings[1].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.ALGO_SETTINGS_NAME,
-                visible=(config.cam_display_id in [Tab.ALGOSETTINGS]),
-                background_color=bg_color_highlight,
-            ),
-            sg.Column(
-                settings[2].widget_layout,
-                vertical_alignment="top",
-                key=UIConstants.CALIB_SETTINGS_NAME,
-                visible=(config.cam_display_id in [Tab.CALIBRATION]),
-                background_color=bg_color_highlight,
-            ),
-        ],
-        # Keep at bottom!
-        [
-            sg.Text(
-                f'- - -  {lang._instance.get_string("general.windowFocus")}  - - -',
-                key="-WINFOCUS-",
-                background_color=bg_color_clear,
-                text_color="#F0F0F0",
-                justification="center",
-                expand_x=True,
-                visible=False,
-            )
-        ],
-    ]
 
     if config.cam_display_id in [Tab.CAM]:
         cams[0].start()
@@ -296,18 +221,9 @@ async def async_main():
             target=osc_receiver.run, name="OSCReceiverThread"
         )
         thread_manager.add_thread(osc_receiver_thread, shutdown_obj=osc_receiver)
-        ROSC = True
-
-    # Create the window
-    window = sg.Window(
-        f"{AppConstants.VERSION}",
-        layout,
-        icon=os.path.join("Images", "logo.ico"),
-        background_color=bg_color_clear,
-    )
 
     # Run the main loop
-    await main_loop(window, config, cams, settings, thread_manager)
+    await main_loop()
 
     # Cleanup after main loop exits
     timerResolution(False)
@@ -316,104 +232,9 @@ async def async_main():
     )
 
 
-async def main_loop(window, config, cams, settings, thread_manager):
-    tint = AppConstants.DEFAULT_WINDOW_FOCUS_REFRESH
-    fs = False
+async def main_loop():
 
     while True:
-        event, values = window.read(timeout=tint)
-
-        if event in ("Exit", sg.WIN_CLOSED):
-            # Exit code here
-            for cam in cams:
-                cam.stop()
-            thread_manager.shutdown_all()
-            window.close()
-            return
-
-        try:
-            # If window isn't in focus increase timeout and stop loop early
-            if window.TKroot.focus_get():
-                if fs:
-                    fs = False
-                    tint = AppConstants.DEFAULT_WINDOW_FOCUS_REFRESH
-                    window[UIConstants.WINDOW_FOCUS_KEY].update(visible=False)
-                    window[UIConstants.WINDOW_FOCUS_KEY].hide_row()
-                    window.refresh()
-            else:
-                if not fs:
-                    fs = True
-                    tint = AppConstants.UNFOCUSED_WINDOW_REFRESH
-                    window[UIConstants.WINDOW_FOCUS_KEY].update(visible=True)
-                    window[UIConstants.WINDOW_FOCUS_KEY].unhide_row()
-                continue
-        except KeyError:
-            pass
-
-        if values[UIConstants.CAM_RADIO_NAME] and config.cam_display_id != Tab.CAM:
-            cams[0].start()
-            settings[0].stop()
-            settings[1].stop()
-            settings[2].stop()
-            window[UIConstants.CAM_NAME].update(visible=True)
-            window[UIConstants.SETTINGS_NAME].update(visible=False)
-            window[UIConstants.ALGO_SETTINGS_NAME].update(visible=False)
-            window[UIConstants.CALIB_SETTINGS_NAME].update(visible=False)
-            config.cam_display_id = Tab.CAM
-            config.save()
-
-        elif (
-            values[UIConstants.SETTINGS_RADIO_NAME]
-            and config.cam_display_id != Tab.SETTINGS
-        ):
-            cams[0].stop()
-            settings[1].stop()
-            settings[2].stop()
-            settings[0].start()
-            window[UIConstants.CAM_NAME].update(visible=False)
-            window[UIConstants.SETTINGS_NAME].update(visible=True)
-            window[UIConstants.ALGO_SETTINGS_NAME].update(visible=False)
-            window[UIConstants.CALIB_SETTINGS_NAME].update(visible=False)
-            config.cam_display_id = Tab.SETTINGS
-            config.save()
-
-        elif (
-            values[UIConstants.ALGO_SETTINGS_RADIO_NAME]
-            and config.cam_display_id != Tab.ALGOSETTINGS
-        ):
-            cams[0].stop()
-            settings[0].stop()
-            settings[2].stop()
-            settings[1].start()
-            window[UIConstants.CAM_NAME].update(visible=False)
-            window[UIConstants.SETTINGS_NAME].update(visible=False)
-            window[UIConstants.ALGO_SETTINGS_NAME].update(visible=True)
-            window[UIConstants.CALIB_SETTINGS_NAME].update(visible=False)
-            config.cam_display_id = Tab.ALGOSETTINGS
-            config.save()
-
-        elif (
-            values[UIConstants.CALIB_SETTINGS_RADIO_NAME]
-            and config.cam_display_id != Tab.CALIBRATION
-        ):
-            cams[0].start()  # Allow tracking to continue in calibration tab
-            settings[0].stop()
-            settings[1].stop()
-            settings[2].start()
-            window[UIConstants.CAM_NAME].update(visible=False)
-            window[UIConstants.SETTINGS_NAME].update(visible=False)
-            window[UIConstants.ALGO_SETTINGS_NAME].update(visible=False)
-            window[UIConstants.CALIB_SETTINGS_NAME].update(visible=True)
-            config.cam_display_id = Tab.CALIBRATION
-            config.save()
-
-        # Otherwise, render all
-        for cam in cams:
-            if cam.started():
-                cam.render(window, event, values)
-        for setting in settings:
-            if setting.started():
-                setting.render(window, event, values)
 
         # Rather than await asyncio.sleep(0), yield control periodically
         await asyncio.sleep(0.001)  # Small sleep to allow other tasks to rundef main():
