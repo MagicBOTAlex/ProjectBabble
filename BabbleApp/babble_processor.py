@@ -4,6 +4,7 @@ import sys
 import asyncio
 
 sys.path.append(".")
+from classes.etvr.visualizer import Visualizer
 from config import BabbleCameraConfig, BabbleSettingsConfig, BabbleConfig
 import queue
 import threading
@@ -65,6 +66,9 @@ class BabbleProcessor:
         self.capture_event = capture_event
         self.cam_id = cam_id
         self.osc_queue = osc_queue
+
+        self.raw_visualizer = Visualizer(self.capture_queue_incoming)
+        self.processed_visualizer = Visualizer(self.image_queue_outgoing)
 
         # Image state
         self.previous_image = None

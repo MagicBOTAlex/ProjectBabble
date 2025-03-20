@@ -19,13 +19,20 @@ Copyright (c) 2023 Project Babble <3
 import ctypes
 import os
 import queue
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 import requests
 import threading
 import asyncio
 import logging
 from ctypes import c_int
+
+import uvicorn
+from assets import ASSETS_DIR
+from assets.images import IMAGES_DIR
 from babble_model_loader import *
 from camera_widget import CameraWidget
+from classes.etvr.PB_ComboAPI import PB_ComboAPI
 from config import BabbleConfig
 from tab import Tab
 from osc import VRChatOSCReceiver, VRChatOSC
@@ -35,6 +42,14 @@ from calib_settings_widget import CalibSettingsWidget
 from utils.misc_utils import ensurePath, os_type, bg_color_highlight, bg_color_clear
 from lang_manager import LocaleStringManager as lang
 from logger import setup_logging
+from fastapi.middleware.cors import CORSMiddleware
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
 
 winmm = None
 
@@ -86,7 +101,7 @@ class ThreadManager:
         if not thread.is_alive():
             return
 
-        # Screw læinux support right now. I love linux mint, but i'm angry
+        # Screw linux support right now. I love linux mint, but i'm angry
         tid = ctypes.c_long(thread.ident)
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
             tid, ctypes.py_object(SystemExit)
@@ -125,6 +140,31 @@ class ThreadManager:
         else:
             self.logger.info("All threads terminated successfully")
 
+def setup_app(babbleCam: CameraWidget):
+    babble_app = PB_ComboAPI(babbleCam)
+    babble_app.add_routes()
+    app = FastAPI()
+    app.include_router(babble_app.router)
+    app.mount("/", StaticFiles(directory=ASSETS_DIR, html=True))
+    app.mount("/images", StaticFiles(directory=IMAGES_DIR))
+    
+    # Enable CORS for Tauri (localhost:1420)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:1420", "http://127.0.0.1:1420"],  # Allow Tauri frontend
+        allow_credentials=True,  # Allow cookies/authenticated requests
+        allow_methods=["*"],  # Allow all request methods (GET, POST, PUT, DELETE)
+        allow_headers=["*"],  # Allow all headers
+    )
+
+    # Check if we're in an existing event loop
+    if asyncio.get_event_loop().is_running():
+        loop = asyncio.get_running_loop()
+        loop.create_task(uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=4422, log_config=None)).serve())
+    else:
+        uvicorn.run(app, host="0.0.0.0", port=4422, log_config=None)  # Works if no event loop is running
+
+    return app
 
 async def async_main():
     ensurePath()
@@ -154,6 +194,7 @@ async def async_main():
     cams = [
         CameraWidget(Tab.CAM, config, osc_queue),
     ]
+    babbleCam = cams[0] # Hopefully python fucking passes by ref here
 
     settings = [
         SettingsWidget(Tab.SETTINGS, config, osc_queue),
@@ -161,7 +202,7 @@ async def async_main():
         CalibSettingsWidget(Tab.CALIBRATION, config, osc_queue),
     ]
 
-
+    # I love how this uses an array, then ditches the array idea. I know it is good fore more flexible code, but ugh. (angry)
     if config.cam_display_id in [Tab.CAM]:
         cams[0].start()
     if config.cam_display_id in [Tab.SETTINGS]:
@@ -179,8 +220,10 @@ async def async_main():
         )
         thread_manager.add_thread(osc_receiver_thread, shutdown_obj=osc_receiver)
 
+    app = setup_app(babbleCam)
+
     # Run the main loop
-    await main_loop()
+    await main_loop(babbleCam)
 
     # Cleanup after main loop exits
     timerResolution(False)
@@ -189,7 +232,8 @@ async def async_main():
     )
 
 
-async def main_loop():
+
+async def main_loop(babbleCam: CameraWidget):
 
     while True:
 
