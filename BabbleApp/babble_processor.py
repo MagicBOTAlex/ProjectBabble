@@ -108,9 +108,19 @@ class BabbleProcessor:
                 provider = onnx_providers
             else:
                 provider = [onnx_providers[-1]]
+                
+            # Determine the correct base path
+            if getattr(sys, 'frozen', False):
+                base_path = sys._MEIPASS  # This points to '_internal' in the built app
+            else:
+                base_path = os.path.dirname(os.path.abspath(__file__))
+
+            # Construct the model path
+            model_path = os.path.join(base_path, self.model, 'onnx', 'model.onnx')
+
             try:
                 self.sess = ort.InferenceSession(
-                    f"{self.model}/onnx/model.onnx",
+                    model_path,
                     self.opts,
                     providers=provider,
                 )
