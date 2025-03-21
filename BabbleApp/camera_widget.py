@@ -16,7 +16,6 @@ from utils.misc_utils import (
     bg_color_clear,
     is_valid_int_input
 )
-from lang_manager import LocaleStringManager as lang
 
 class CameraWidget:
     def __init__(self, widget_id: Tab, main_config: BabbleConfig, osc_queue: Queue):
@@ -53,7 +52,7 @@ class CameraWidget:
             self.config = main_config.cam
         else:
             raise RuntimeError(
-                f'\033[91m[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("error.improperTabValue")}\033[0m'
+                f'\033[91m[WARN] error.improperTabValue\033[0m'
             )
 
         self.cancellation_event = Event()

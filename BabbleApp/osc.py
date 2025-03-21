@@ -8,7 +8,6 @@ from config import BabbleConfig
 import traceback
 import math
 import os
-from lang_manager import LocaleStringManager as lang
 
 class Tab(IntEnum):
     CAM = 0
@@ -97,7 +96,7 @@ class VRChatOSC:
         while True:
             if self.cancellation_event.is_set():
                 print(
-                    f'\033[94m[{lang._instance.get_string("log.info")}] Exiting OSC Queue\033[0m'
+                    f'\033[94m[INFO] Exiting OSC Queue\033[0m'
                 )
                 return
             try:
@@ -132,12 +131,12 @@ class VRChatOSCReceiver:
             )
         except:
             print(
-                f'\033[91m[{lang._instance.get_string("log.error")}] OSC Receive port: {self.config.gui_osc_receiver_port} occupied.\033[0m'
+                f'\033[91m[ERROR] OSC Receive port: {self.config.gui_osc_receiver_port} occupied.\033[0m'
             )
 
     def shutdown(self):
         print(
-            f'\033[94m[{lang._instance.get_string("log.info")}] Exiting OSC Receiver\033[0m'
+            f'\033[94m[INFO] Exiting OSC Receiver\033[0m'
         )
         try:
             self.server.shutdown()
@@ -161,12 +160,12 @@ class VRChatOSCReceiver:
             )
             # start the server
             print(
-                f'\033[92m[{lang._instance.get_string("log.info")}] VRChatOSCReceiver serving on {self.server.server_address}\033[0m'
+                f'\033[92m[INFO] VRChatOSCReceiver serving on {self.server.server_address}\033[0m'
             )
             self.server.serve_forever()
 
         except:
             traceback.print_exc()
             print(
-                f'\033[91m[{lang._instance.get_string("log.error")}] OSC Receive port: {self.config.gui_osc_receiver_port} occupied.\033[0m'
+                f'\033[91m[ERROR] OSC Receive port: {self.config.gui_osc_receiver_port} occupied.\033[0m'
             )

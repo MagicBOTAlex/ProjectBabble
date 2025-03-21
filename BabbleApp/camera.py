@@ -9,7 +9,6 @@ import traceback
 import threading
 from enum import Enum
 import serial.tools.list_ports
-from lang_manager import LocaleStringManager as lang
 from colorama import Fore
 from config import BabbleConfig, BabbleSettingsConfig
 from PIL import Image
@@ -71,7 +70,7 @@ class Camera:
         self.frame_number = 0
         self.FRAME_SIZE = [0, 0]
 
-        self.error_message = f'{Fore.YELLOW}[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("info.enterCaptureOne")} {{}} {lang._instance.get_string("info.enterCaptureTwo")}{Fore.RESET}'
+        self.error_message = f'{Fore.YELLOW}[WARN] info.enterCaptureOne {{}} info.enterCaptureTwo{Fore.RESET}'
 
     def __del__(self):
         if self.serial_connection is not None:
@@ -84,7 +83,7 @@ class Camera:
         while True:
             if self.cancellation_event.is_set():
                 print(
-                    f'{Fore.CYAN}[{lang._instance.get_string("log.info")}] {lang._instance.get_string("info.exitCaptureThread")}{Fore.RESET}'
+                    f'{Fore.CYAN}[INFO] info.exitCaptureThread{Fore.RESET}'
                 )
                 if self.vft_camera is not None:
                     self.vft_camera.close()
@@ -218,7 +217,7 @@ class Camera:
                 ret, image = self.cv2_camera.read()     # MJPEG Stream reconnects are currently limited by the hard coded 30 second timeout time on VideoCapture.read(). We can get around this by recompiling OpenCV or using a custom MJPEG stream imp.   
                 if not ret:
                     self.cv2_camera.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    raise RuntimeError(lang._instance.get_string("error.frame"))
+                    raise RuntimeError("error.frame")
                 self.frame_number = self.cv2_camera.get(cv2.CAP_PROP_POS_FRAMES) + 1
             else:
                 # Switching from a Vive Facial Tracker to a CV2 camera
@@ -238,7 +237,7 @@ class Camera:
         except Exception:
             FTCameraController._logger.exception("get_image")
             print(
-                f'{Fore.YELLOW}[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("warn.captureProblem")}{Fore.RESET}'
+                f'{Fore.YELLOW}[WARN] warn.captureProblem{Fore.RESET}'
             )
             self.camera_status = CameraState.DISCONNECTED
             pass
@@ -278,7 +277,7 @@ class Camera:
                         image = np.array(Image.open(BytesIO(jpeg)))
                     except Exception:
                         print(
-                            f'{Fore.YELLOW}[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("warn.frameDrop")}{Fore.RESET}'
+                            f'{Fore.YELLOW}[WARN] warn.frameDrop{Fore.RESET}'
                         )
                         return
                     # Calculate FPS
@@ -296,13 +295,13 @@ class Camera:
                 # may build up some outdated frames. A bit of a workaround here tbh.
                 # Do this at the end to give buffer time to refill.
                 if conn.in_waiting >= BUFFER_SIZE:
-                    print(f'{Fore.CYAN}[{lang._instance.get_string("log.info")}] {lang._instance.get_string("info.discardingSerial")} ({conn.in_waiting} bytes){Fore.RESET}')
+                    print(f'{Fore.CYAN}[INFO] info.discardingSerial ({conn.in_waiting} bytes){Fore.RESET}')
                     conn.reset_input_buffer()
                     self.buffer = b""
 
         except Exception:
             print(
-                f'{Fore.YELLOW}[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("info.serialCapture")}{Fore.RESET}'
+                f'{Fore.YELLOW}[WARN] info.serialCapture{Fore.RESET}'
             )
             conn.close()
             self.camera_status = CameraState.DISCONNECTED
@@ -327,13 +326,13 @@ class Camera:
                 conn.set_buffer_size(rx_size=BUFFER_SIZE, tx_size=BUFFER_SIZE)
 
             print(
-                f'{Fore.CYAN}[{lang._instance.get_string("log.info")}] {lang._instance.get_string("info.ETVRConnected")} {port}{Fore.RESET}'
+                f'{Fore.CYAN}[INFO] info.ETVRConnected {port}{Fore.RESET}'
             )
             self.serial_connection = conn
             self.camera_status = CameraState.CONNECTED
         except Exception as e:
             print(
-                f'{Fore.CYAN}[{lang._instance.get_string("log.info")}] {lang._instance.get_string("info.ETVRFailiure")} {port}{Fore.RESET}'
+                f'{Fore.CYAN}[INFO] info.ETVRFailiure {port}{Fore.RESET}'
             )
             print(e)
             self.camera_status = CameraState.DISCONNECTED
@@ -357,7 +356,7 @@ class Camera:
         qsize = self.camera_output_outgoing.qsize()
         if qsize > 1:
             print(
-                f'{Fore.YELLOW}[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("warn.backpressure1")} {qsize}. {lang._instance.get_string("warn.backpressure2")}{Fore.RESET}'
+                f'{Fore.YELLOW}[WARN] warn.backpressure1 {qsize}. warn.backpressure2{Fore.RESET}'
             )
         self.camera_output_outgoing.put((self.clamp_max_res(image), frame_number, fps))
         self.capture_event.clear()

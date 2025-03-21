@@ -40,7 +40,6 @@ from general_settings_widget import SettingsWidget
 from algo_settings_widget import AlgoSettingsWidget
 from calib_settings_widget import CalibSettingsWidget
 from utils.misc_utils import ensurePath, os_type, bg_color_highlight, bg_color_clear
-from lang_manager import LocaleStringManager as lang
 from logger import setup_logging
 from fastapi.middleware.cors import CORSMiddleware
 import logging
@@ -60,7 +59,7 @@ if os_type == "Windows":
         winmm = windll.winmm
     except OSError:
         print(
-            f'\033[91m[{lang._instance.get_string("log.error")}] {lang._instance.get_string("error.winmm")}.\033[0m'
+            f'\033[91m[ERROR] error.winmm.\033[0m'
         )
 
 os.system("color")  # init ANSI color
@@ -79,7 +78,7 @@ def timerResolution(toggle):
             if rc.value != 0:
                 # TIMEERR_NOCANDO = 97
                 print(
-                    f'\033[93m[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("warn.timerRes")} {rc.value}\033[0m'
+                    f'\033[93m[WARN] warn.timerRes {rc.value}\033[0m'
                 )
         else:
             winmm.timeEndPeriod(1)
@@ -173,9 +172,6 @@ async def async_main():
     # Get Configuration
     config: BabbleConfig = BabbleConfig.load()
 
-    # Init locale manager
-    lang("Locale", config.settings.gui_language)
-
     config.save()
 
     # Uncomment for low-level Vive Facial Tracker logging
@@ -228,7 +224,7 @@ async def async_main():
     # Cleanup after main loop exits
     timerResolution(False)
     print(
-        f'\033[94m[{lang._instance.get_string("log.info")}] {lang._instance.get_string("babble.exit")}\033[0m'
+        f'\033[94m[INFO] babble.exit\033[0m'
     )
 
 

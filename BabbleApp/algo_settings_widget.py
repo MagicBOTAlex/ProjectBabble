@@ -4,7 +4,6 @@ from queue import Queue
 from threading import Event
 import re
 from utils.misc_utils import bg_color_highlight, bg_color_clear, is_valid_float_input, is_valid_int_input
-from lang_manager import LocaleStringManager as lang
 
 
 class AlgoSettingsWidget:

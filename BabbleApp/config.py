@@ -6,7 +6,6 @@ from utils.misc_utils import ensurePath
 from tab import Tab
 from pydantic import BaseModel
 from typing import Union
-from lang_manager import LocaleStringManager as lang
 
 CONFIG_FILE_NAME: str = "babble_settings.json"
 BACKUP_CONFIG_FILE_NAME: str = "babble_settings.backup"

@@ -1,4 +1,3 @@
-from lang_manager import LocaleStringManager as lang
 from config import BabbleSettingsConfig
 from osc import Tab
 from queue import Queue
@@ -26,13 +25,9 @@ class SettingsWidget:
         self.gui_cam_resolution_y = f"-CAMRESY{widget_id}-"
         self.gui_cam_framerate = f"-CAMFRAMERATE{widget_id}-"
         self.gui_use_red_channel = f"-REDCHANNEL{widget_id}-"
-        self.gui_language = f"-LANGUAGE{widget_id}-"  # Add this line
         self.main_config = main_config
         self.config = main_config.settings
         self.osc_queue = osc_queue
-        self.available_languages = (
-            lang._instance.get_languages()
-        )  # Add more languages as needed
 
         self.cancellation_event = (
             Event()
@@ -78,7 +73,7 @@ class SettingsWidget:
                 self.config.gui_osc_receiver_port = int(value)
                 changed = True
         else:
-            print(f'\033[91m[{lang._instance.get_string("log.error")}] {lang._instance.get_string("error.oscPort")}\033[0m')
+            print(f'\033[91m[ERROR] error.oscPort\033[0m')
             if not is_valid_int_input(value):
                 value = value[:-1]
                 window[self.gui_osc_receiver_port].update(value)
@@ -164,11 +159,6 @@ class SettingsWidget:
         # Update the use of the red channel
         if self.config.gui_use_red_channel != bool(values[self.gui_use_red_channel]):
             self.config.gui_use_red_channel = bool(values[self.gui_use_red_channel])
-            changed = True
-
-        # Update language if it has changed
-        if self.config.gui_language != values[self.gui_language]:
-            self.config.gui_language = values[self.gui_language]
             changed = True
 
         # Save the configuration if changes were made

@@ -3,7 +3,6 @@ from math import log
 from enum import IntEnum
 from utils.misc_utils import playSound
 import os
-from lang_manager import LocaleStringManager as lang
 
 class CamId(IntEnum):
     CAM = 0
@@ -52,7 +51,7 @@ class cal:
                 )
                 self.config_class.save()
                 print(
-                    f'[{lang._instance.get_string("log.info")}] Calibration completed.'
+                    f'[INFO] Calibration completed.'
                 )
 
                 playSound(os.path.join("Audio", "completed.wav"))
@@ -84,7 +83,7 @@ class cal:
                 self.settings.calib_array = str([lower_threshold, upper_threshold])
                 self.config_class.save()
                 print(
-                    f'[{lang._instance.get_string("log.info")}] Calibration completed.'
+                    f'[INFO] Calibration completed.'
                 )
 
         elif self.calibration_frame_counter != None:

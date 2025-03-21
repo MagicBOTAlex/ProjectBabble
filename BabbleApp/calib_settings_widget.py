@@ -5,7 +5,6 @@ from threading import Event
 import numpy as np
 from calib_settings_values import set_shapes
 from utils.misc_utils import bg_color_highlight, bg_color_clear, is_valid_float_input
-from lang_manager import LocaleStringManager as lang
 
 
 class CalibSettingsWidget:

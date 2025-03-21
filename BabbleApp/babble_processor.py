@@ -22,7 +22,6 @@ import os
 
 os.environ["OMP_NUM_THREADS"] = "1"
 import onnxruntime as ort
-from lang_manager import LocaleStringManager as lang
 
 
 def run_once(f):
@@ -117,7 +116,7 @@ class BabbleProcessor:
                 )
             except:                                                 # Load default model if we can't find the specified model
                 print(
-                f'\033[91m[{lang._instance.get_string("log.error")}] {lang._instance.get_string("error.modelLoad")} {self.model}\033[0m'
+                f'\033[91m[Error] error.modelLoad {self.model}\033[0m' # Really? Localised errors is cool, but soo unnessesary
                 )
                 print(f'\033[91mLoading Default model: {self.default_model}.\033[0m')
                 self.sess = ort.InferenceSession(
@@ -133,7 +132,7 @@ class BabbleProcessor:
             beta = float(self.settings.gui_speed_coefficient)
         except:
             print(
-                f'\033[93m[{lang._instance.get_string("log.warn")}] {lang._instance.get_string("warn.oneEuroValues")}.\033[0m'
+                f'\033[93m[WARN] warn.oneEuroValues.\033[0m'
             )
             min_cutoff = 0.9
             beta = 0.9
@@ -159,7 +158,7 @@ class BabbleProcessor:
             self.osc_queue.put((None, output_information))
         except:  # If this fails it likely means that the images are not the same size for some reason.
             print(
-                f'\033[91m[{lang._instance.get_string("log.error")}] {lang._instance.get_string("error.size")}.\033[0m'
+                f'\033[91m[ERROR] error.size.\033[0m'
             )
 
     def capture_crop_rotate_image(self):
@@ -181,7 +180,7 @@ class BabbleProcessor:
             # Failure to process frame, reuse previous frame.
             self.current_image = self.previous_image
             print(
-                f'\033[91m[{lang._instance.get_string("log.error")}] {lang._instance.get_string("error.capture")}.\033[0m'
+                f'\033[91m[ERROR] error.capture.\033[0m'
             )
 
         try:
@@ -229,7 +228,7 @@ class BabbleProcessor:
             # Check to make sure we haven't been requested to close
             if self.cancellation_event.is_set():
                 print(
-                    f'\033[94m[{lang._instance.get_string("log.info")}] {lang._instance.get_string("info.exitTrackingThread")}\033[0m'
+                    f'\033[94m[INFO] info.exitTrackingThread\033[0m'
                 )
                 return
 
