@@ -1,6 +1,7 @@
 from collections import deque
 from queue import Queue, Empty
 from threading import Event, Thread
+from classes.ThreadManager import ThreadManager
 from classes.etvr.visualizer import Visualizer
 import cv2
 import os
@@ -18,28 +19,8 @@ from utils.misc_utils import (
 )
 
 class CameraWidget:
-    def __init__(self, widget_id: Tab, main_config: BabbleConfig, osc_queue: Queue):
-        self.gui_camera_addr = f"-CAMERAADDR{widget_id}-"
-        self.gui_rotation_slider = f"-ROTATIONSLIDER{widget_id}-"
-        self.gui_roi_button = f"-ROIMODE{widget_id}-"
-        self.gui_roi_layout = f"-ROILAYOUT{widget_id}-"
-        self.gui_roi_selection = f"-GRAPH{widget_id}-"
-        self.gui_tracking_button = f"-TRACKINGMODE{widget_id}-"
-        self.gui_autoroi = f"-AUTOROI{widget_id}-"
-        self.gui_save_tracking_button = f"-SAVETRACKINGBUTTON{widget_id}-"
-        self.gui_tracking_layout = f"-TRACKINGLAYOUT{widget_id}-"
-        self.gui_tracking_image = f"-IMAGE{widget_id}-"
-        self.gui_tracking_fps = f"-TRACKINGFPS{widget_id}-"
-        self.gui_tracking_bps = f"-TRACKINGBPS{widget_id}-"
-        self.gui_output_graph = f"-OUTPUTGRAPH{widget_id}-"
-        self.gui_restart_calibration = f"-RESTARTCALIBRATION{widget_id}-"
-        self.gui_stop_calibration = f"-STOPCALIBRATION{widget_id}-"
-        self.gui_mode_readout = f"-APPMODE{widget_id}-"
-        self.gui_roi_message = f"-ROIMESSAGE{widget_id}-"
-        self.gui_vertical_flip = f"-VERTICALFLIP{widget_id}-"
-        self.gui_horizontal_flip = f"-HORIZONTALFLIP{widget_id}-"
-        self.use_calibration = f"-USECALIBRATION{widget_id}-"
-        self.gui_refresh_button = f"-REFRESHCAMLIST{widget_id}-"
+    def __init__(self, widget_id: Tab, main_config: BabbleConfig, osc_queue: Queue, thread_manager: ThreadManager):
+        self.thread_manager = thread_manager
         self.osc_queue = osc_queue
         self.main_config = main_config
         self.cam_id = widget_id
@@ -110,11 +91,11 @@ class CameraWidget:
             return
         self.cancellation_event.clear()
         self.babble_cnn_thread = Thread(target=self.babble_cnn.run)
-        self.babble_cnn_thread.start()
+        self.thread_manager.add_thread(self.babble_cnn_thread)
         # self.babble_landmark_thread = Thread(target=self.babble_landmark.run)
         # self.babble_landmark_thread.start()
         self.camera_thread = Thread(target=self.camera.run)
-        self.camera_thread.start()
+        self.thread_manager.add_thread(self.camera_thread)
         
 
     def stop(self):

@@ -8,10 +8,13 @@ from camera_widget import CameraWidget
 
 import logging
 
+from classes.ThreadManager import ThreadManager
+
 logger = logging.getLogger(__name__)
 
 class PB_ComboAPI:
-    def __init__(self, babbleCam: CameraWidget):
+    def __init__(self, babbleCam: CameraWidget, thread_manager: ThreadManager):
+        self.thread_manager = thread_manager;
         self.running: bool = False
         self.router: APIRouter = APIRouter()
         self.babbleCam = babbleCam;
@@ -46,6 +49,11 @@ class PB_ComboAPI:
         newState = targetState > 0
         self.babbleCam.babble_cnn.settings.use_calibration = newState
         return {"message": "State changed to " + ("enabled" if newState else "disabled")} # EWWW python gross. why does it have to be different compared to fucking everythign else
+
+    async def shutdown(self):
+        await self.router.shutdown()
+        self.thread_manager.shutdown_all()
+        return "ok"
 
     def add_routes(self) -> None:
         # region: Image streaming endpoints
@@ -90,6 +98,14 @@ class PB_ComboAPI:
             tags=["calibration"],
             path="/calibrate/set",
             endpoint=self.setCalibrationState,
+            methods=["GET"],
+        )
+
+        self.router.add_api_route(
+            name="Force shutdowns the babble process",
+            tags=["control"],
+            path="/shutdown",
+            endpoint=self.shutdown,
             methods=["GET"],
         )
 

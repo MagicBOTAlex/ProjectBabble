@@ -32,6 +32,7 @@ from assets import ASSETS_DIR
 from assets.images import IMAGES_DIR
 from babble_model_loader import *
 from camera_widget import CameraWidget
+from classes.ThreadManager import ThreadManager
 from classes.etvr.PB_ComboAPI import PB_ComboAPI
 from config import BabbleConfig
 from tab import Tab
@@ -83,64 +84,8 @@ def timerResolution(toggle):
         else:
             winmm.timeEndPeriod(1)
 
-class ThreadManager:
-    def __init__(self, cancellation_event):
-        """Initialize ThreadManager with a cancellation event for signaling threads."""
-        self.threads = []  # List of (thread, shutdown_obj) tuples
-        self.cancellation_event = cancellation_event
-        self.logger = logging.getLogger("ThreadManager")
-
-    def add_thread(self, thread, shutdown_obj=None):
-        """Add a thread and its optional shutdown object to the manager."""
-        self.threads.append((thread, shutdown_obj))
-        thread.start()
-        self.logger.debug(f"Started thread: {thread.name}")
-
-    def kill_thread(self, thread):
-        if not thread.is_alive():
-            return
-
-        # Screw linux support right now. I love linux mint, but i'm angry
-        tid = ctypes.c_long(thread.ident)
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
-            tid, ctypes.py_object(SystemExit)
-        )
-        if res > 1:
-            ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
-            raise SystemError("Failed to kill thread")
-
-    def shutdown_all(self, timeout=5.0):
-        """Shutdown all managed threads with a configurable timeout."""
-        self.logger.info("Initiiating shutdown of all threads")
-        self.cancellation_event.set()  # Signal all threads to stop
-
-
-        time.sleep(1000) # Gonna give them 1 fucking second to shutdown, or else off with their heads
-
-        # Call shutdown methods on associated objects if available
-        for thread, shutdown_obj in self.threads:
-            self.kill_thread(thread)
-
-        # Join threads with the specified timeout
-        for thread, _ in self.threads:
-            if thread.is_alive():
-                self.logger.debug(
-                    f"Joining thread: {thread.name} with timeout {timeout}s"
-                )
-                thread.join(timeout=timeout)
-
-        # Remove terminated threads from the list
-        self.threads = [(t, s) for t, s in self.threads if t.is_alive()]
-
-        if self.threads:
-            self.logger.warning(
-                f"{len(self.threads)} threads still alive: {[t.name for t, _ in self.threads]}"
-            )
-        else:
-            self.logger.info("All threads terminated successfully")
-
-def setup_app(babbleCam: CameraWidget):
-    babble_app = PB_ComboAPI(babbleCam)
+def setup_app(babbleCam: CameraWidget, thread_manager: ThreadManager):
+    babble_app = PB_ComboAPI(babbleCam, thread_manager)
     babble_app.add_routes()
     app = FastAPI()
     app.include_router(babble_app.router)
@@ -188,7 +133,7 @@ async def async_main():
     osc_thread = threading.Thread(target=osc.run, name="OSCThread")
     thread_manager.add_thread(osc_thread, shutdown_obj=osc)
     cams = [
-        CameraWidget(Tab.CAM, config, osc_queue),
+        CameraWidget(Tab.CAM, config, osc_queue, thread_manager),
     ]
     babbleCam = cams[0] # Hopefully python fucking passes by ref here
 
@@ -216,10 +161,10 @@ async def async_main():
         )
         thread_manager.add_thread(osc_receiver_thread, shutdown_obj=osc_receiver)
 
-    app = setup_app(babbleCam)
+    app = setup_app(babbleCam, thread_manager)
 
     # Run the main loop
-    await main_loop(babbleCam)
+    await main_loop(thread_manager)
 
     # Cleanup after main loop exits
     timerResolution(False)
@@ -229,13 +174,16 @@ async def async_main():
 
 
 
-async def main_loop(babbleCam: CameraWidget):
+async def main_loop(thread_manager: ThreadManager):
 
-    while True:
+    while not thread_manager.cancellation_event.is_set():
 
         # Rather than await asyncio.sleep(0), yield control periodically
         await asyncio.sleep(0.001)  # Small sleep to allow other tasks to rundef main():
-    asyncio.run(async_main())
+
+    print(
+        f'\033[94m[INFO] Main exit\033[0m'
+    )
 
 
 def main():
