@@ -19,6 +19,8 @@ Copyright (c) 2023 Project Babble <3
 import ctypes
 import os
 import queue
+import signal
+import sys
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import requests
@@ -108,7 +110,7 @@ def setup_app(babbleCam: CameraWidget, thread_manager: ThreadManager):
     else:
         uvicorn.run(app, host="0.0.0.0", port=4422, log_config=None)  # Works if no event loop is running
 
-    return app
+    return app, babble_app
 
 async def async_main():
     ensurePath()
@@ -161,10 +163,10 @@ async def async_main():
         )
         thread_manager.add_thread(osc_receiver_thread, shutdown_obj=osc_receiver)
 
-    app = setup_app(babbleCam, thread_manager)
+    app, babble_app = setup_app(babbleCam, thread_manager)
 
     # Run the main loop
-    await main_loop(thread_manager)
+    await main_loop(app, babble_app, thread_manager)
 
     # Cleanup after main loop exits
     timerResolution(False)
@@ -174,17 +176,22 @@ async def async_main():
 
 
 
-async def main_loop(thread_manager: ThreadManager):
+async def main_loop(app: FastAPI, babble_app: PB_ComboAPI, thread_manager: ThreadManager):
 
-    while not thread_manager.cancellation_event.is_set():
-
+    while not babble_app.shutdownFlag:
+        
         # Rather than await asyncio.sleep(0), yield control periodically
         await asyncio.sleep(0.001)  # Small sleep to allow other tasks to rundef main():
+
+    print("Shutdown detected. shutting down")
+    os.kill(os.getpid(), signal.SIGINT)
+    thread_manager.shutdown_all()
+
 
     print(
         f'\033[94m[INFO] Main exit\033[0m'
     )
-    quit()
+    sys.exit()
 
 
 def main():

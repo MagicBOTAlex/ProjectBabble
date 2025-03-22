@@ -19,6 +19,7 @@ class PB_ComboAPI:
         self.router: APIRouter = APIRouter()
         self.babbleCam = babbleCam;
         self.babbleCam.start();
+        self.shutdownFlag = False;
 
     async def raw_feed(self):
         return self.babbleCam.babble_cnn.raw_visualizer.video_feed()
@@ -51,9 +52,9 @@ class PB_ComboAPI:
         return {"message": "State changed to " + ("enabled" if newState else "disabled")} # EWWW python gross. why does it have to be different compared to fucking everythign else
 
     async def shutdown(self):
-        await self.router.shutdown()
-        self.thread_manager.shutdown_all()
-        sys.exit()
+        self.shutdownFlag = True
+        return "ok"
+        
 
     def add_routes(self) -> None:
         # region: Image streaming endpoints

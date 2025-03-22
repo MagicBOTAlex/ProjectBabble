@@ -27,6 +27,8 @@ class ThreadManager:
 
         # Call shutdown methods on associated objects if available
         for thread, shutdown_obj in self.threads:
+            self.logger.error(f"Shutting down {thread.name}")
+
             if (
                 shutdown_obj
                 and hasattr(shutdown_obj, "shutdown")
