@@ -22,6 +22,7 @@ import queue
 import signal
 import sys
 from fastapi import FastAPI
+from fastapi.concurrency import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 import requests
 import threading
@@ -86,10 +87,15 @@ def timerResolution(toggle):
         else:
             winmm.timeEndPeriod(1)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    gracefulShutdown()
+
 def setup_app(babbleCam: CameraWidget, thread_manager: ThreadManager):
     babble_app = PB_ComboAPI(babbleCam, thread_manager)
     babble_app.add_routes()
-    app = FastAPI()
+    app = FastAPI(redirect_slashes=True, lifespan=lifespan)
     app.include_router(babble_app.router)
     app.mount("/", StaticFiles(directory=ASSETS_DIR, html=True))
     app.mount("/images", StaticFiles(directory=IMAGES_DIR))
@@ -112,6 +118,12 @@ def setup_app(babbleCam: CameraWidget, thread_manager: ThreadManager):
 
     return app, babble_app
 
+def gracefulShutdown():
+    global thread_manager
+    print("Shutdown detected. shutting down")
+    os.kill(os.getpid(), signal.SIGINT)
+    thread_manager.shutdown_all()
+
 async def async_main():
     ensurePath()
     setup_logging()
@@ -128,6 +140,7 @@ async def async_main():
 
     timerResolution(True)
 
+    global thread_manager
     thread_manager = ThreadManager(cancellation_event)
 
     osc_queue: queue.Queue[tuple[bool, int, int]] = queue.Queue(maxsize=10)
@@ -166,7 +179,7 @@ async def async_main():
     app, babble_app = setup_app(babbleCam, thread_manager)
 
     # Run the main loop
-    await main_loop(app, babble_app, thread_manager)
+    await main_loop(app, babble_app)
 
     # Cleanup after main loop exits
     timerResolution(False)
@@ -176,17 +189,14 @@ async def async_main():
 
 
 
-async def main_loop(app: FastAPI, babble_app: PB_ComboAPI, thread_manager: ThreadManager):
+async def main_loop(app: FastAPI, babble_app: PB_ComboAPI):
 
     while not babble_app.shutdownFlag:
         
         # Rather than await asyncio.sleep(0), yield control periodically
         await asyncio.sleep(0.001)  # Small sleep to allow other tasks to rundef main():
 
-    print("Shutdown detected. shutting down")
-    os.kill(os.getpid(), signal.SIGINT)
-    thread_manager.shutdown_all()
-
+    gracefulShutdown()
 
     print(
         f'\033[94m[INFO] Main exit\033[0m'
