@@ -177,14 +177,15 @@ class BabbleProcessor:
         try:
             # Get frame from capture source, crop to ROI
             self.FRAMESIZE = self.current_image.shape
-            self.current_image = self.current_image[
-                int(self.config.roi_window_y) : int(
-                    self.config.roi_window_y + self.config.roi_window_h
-                ),
-                int(self.config.roi_window_x) : int(
-                    self.config.roi_window_x + self.config.roi_window_w
-                ),
-            ]
+            if self.config.roi_window_w > 0 and self.config.roi_window_h > 0: # If crop not set, then continue. ffs
+                self.current_image = self.current_image[
+                    int(self.config.roi_window_y) : int(
+                        self.config.roi_window_y + self.config.roi_window_h
+                    ),
+                    int(self.config.roi_window_x) : int(
+                        self.config.roi_window_x + self.config.roi_window_w
+                    ),
+                ]
 
         except:
             # Failure to process frame, reuse previous frame.
@@ -243,13 +244,6 @@ class BabbleProcessor:
                 )
                 return
 
-            if self.config.roi_window_w <= 0 or self.config.roi_window_h <= 0:
-                # At this point, we're waiting for the user to set up the ROI window in the GUI.
-                # Sleep a bit while we wait.
-                if self.cancellation_event.wait(0.1):
-                    return
-                continue
-
             try:
                 if self.capture_queue_incoming.empty():
                     self.capture_event.set()
@@ -260,7 +254,7 @@ class BabbleProcessor:
                     self.current_fps,
                 ) = self.capture_queue_incoming.get(block=True, timeout=0.1)
             except queue.Empty:
-                print("No image available")
+                # print("No image available")
                 continue
 
             if not self.capture_crop_rotate_image():

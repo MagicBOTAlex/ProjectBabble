@@ -156,21 +156,21 @@ class Camera:
                             return
                         if self.config.capture_source not in self.camera_list:
                             self.current_capture_source = self.config.capture_source
-                            print("correct") 
+                            # print("correct") 
                         else:
                             self.current_capture_source = get_camera_index_by_name(self.config.capture_source)
-                            print("wrong2") 
+                            # print("wrong2") 
 
                         if self.config.use_ffmpeg or True: # FFS, took a shit of of prints to find that this requires ffmpeg for some unknown reason
                             self.cv2_camera = cv2.VideoCapture(
                                 self.current_capture_source, cv2.CAP_FFMPEG
                             )
-                            print("ffmpeg") 
+                            # print("ffmpeg") 
                         else:
-                            print("Starting camera connection")
+                            # print("Starting camera connection")
                             self.cv2_camera = cv2.VideoCapture()
                             self.cv2_camera.open(self.current_capture_source)
-                            print("Camera connected")
+                            # print("Camera connected")
 
                         if not self.settings.gui_cam_resolution_x == 0:
                             self.cv2_camera.set(
@@ -209,13 +209,13 @@ class Camera:
                 if not should_push:
                     # if we get all the way down here, consider ourselves connected
                     self.camera_status = CameraState.CONNECTED
-            print("run loop done")
-        print("run loop exited")
+            # print("run loop done")
+        # print("run loop exited")
 
     def get_camera_picture(self, should_push):
         try:
             image = None
-            print("Getting frame")
+            # print("Getting frame")
             # Is the current camera a Vive Facial Tracker and have we opened a connection to it before?
             if self.vft_camera is not None and self.device_is_vft:
                 image = self.vft_camera.get_image()
@@ -226,7 +226,7 @@ class Camera:
                 ret, image = self.cv2_camera.read()     # MJPEG Stream reconnects are currently limited by the hard coded 30 second timeout time on VideoCapture.read(). We can get around this by recompiling OpenCV or using a custom MJPEG stream imp.   
                 if not ret:
                     self.cv2_camera.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    print("No frame detected")
+                    # print("No frame detected")
                     raise RuntimeError("error.frame")
                 self.frame_number = self.cv2_camera.get(cv2.CAP_PROP_POS_FRAMES) + 1
             else:
@@ -243,9 +243,9 @@ class Camera:
             self.bps = image.nbytes * self.fps
 
 
-            print("Got frame!")
+            # print("Got frame!")
             if should_push:
-                print("frame pushed")
+                # print("frame pushed")
                 self.push_image_to_queue(image, self.frame_number, self.fps)
         except Exception:
             FTCameraController._logger.exception("get_image")
