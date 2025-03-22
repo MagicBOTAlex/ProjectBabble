@@ -184,6 +184,7 @@ async def main_loop(thread_manager: ThreadManager):
     print(
         f'\033[94m[INFO] Main exit\033[0m'
     )
+    quit()
 
 
 def main():

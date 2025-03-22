@@ -53,28 +53,28 @@ class PB_ComboAPI:
     async def shutdown(self):
         await self.router.shutdown()
         self.thread_manager.shutdown_all()
-        return "ok"
+        sys.exit()
 
     def add_routes(self) -> None:
         # region: Image streaming endpoints
         self.router.add_api_route(
             name="Get raw camera feed before ROI cropping",
             tags=["streaming"],
-            path="/camera/raw/",
+            path="/camera/raw",
             endpoint=self.raw_feed,
             methods=["GET"],
         )
         self.router.add_api_route(
             name="Get cropped camera feed",
             tags=["streaming"],
-            path="/camera/cropped/",
+            path="/camera/cropped",
             endpoint=self.cropped_feed,
             methods=["GET"],
         )
         self.router.add_api_route(
             name="Get cropped camera feed",
             tags=["streaming"],
-            path="/camera/processed/",
+            path="/camera/processed",
             endpoint=self.processed_feed,
             methods=["GET"],
         )

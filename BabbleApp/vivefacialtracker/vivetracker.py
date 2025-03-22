@@ -457,18 +457,19 @@ class ViveTracker:
                 if not os.path.exists(device_name):
                     return False
 
-                # Use subprocess to run v4l2-ctl and capture the output
-                result = subprocess.run(
-                    ["v4l2-ctl", "--all", "--device", device_name],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=True,
-                )
+                # # Use subprocess to run v4l2-ctl and capture the output
+                # result = subprocess.run(
+                #     ["v4l2-ctl", "--all", "--device", device_name],
+                #     stdout=subprocess.PIPE,
+                #     stderr=subprocess.PIPE,
+                #     text=True,
+                #     check=True,
+                # )
 
-                # Search for the 'HTC Multimedia Camera' keyword in the output
-                return "HTC Multimedia Camera" in result.stdout
+                # # Search for the 'HTC Multimedia Camera' keyword in the output
+                # return "HTC Multimedia Camera" in result.stdout
 
+                return False
             except Exception:
                 return False
         else:

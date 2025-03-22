@@ -58,21 +58,22 @@ def list_cameras_opencv():
 
 
 def is_uvc_device(device):
-    """Check if the device is a UVC video device (not metadata)"""
-    try:
-        result = subprocess.run(
-            ["v4l2-ctl", f"--device={device}", "--all"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        output = result.stdout.decode("utf-8")
+    # """Check if the device is a UVC video device (not metadata)"""
+    # try:
+        #     result = subprocess.run(
+    #         ["v4l2-ctl", f"--device={device}", "--all"],
+    #         stdout=subprocess.PIPE,
+    #         stderr=subprocess.PIPE,
+    #     )
+    #     output = result.stdout.decode("utf-8")
 
-        # Check if "UVC Payload Header Metadata" is in the output
-        if "UVC Payload Header Metadata" in output:
-            return False  # It's metadata, not actual video
-        return True  # It's a valid video device
-    except Exception as e:
-        return False
+    #     # Check if "UVC Payload Header Metadata" is in the output
+    #     if "UVC Payload Header Metadata" in output:
+    #         return False  # It's metadata, not actual video
+    #     return True  # It's a valid video device
+    # except Exception as e:
+    #     return False
+    return False
 
 
 def list_linux_uvc_devices():
