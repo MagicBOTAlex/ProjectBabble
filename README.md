@@ -7,5 +7,6 @@ TODO: \
 [x] Added REST API \
 [x] Camera streams \
 [x] Calibration get \
-[ ] Crop/setting setting from rust \
+[x] Crop/setting setting from rust \
+[ ] Clean up on aisle 3
 [ ] Profit?
