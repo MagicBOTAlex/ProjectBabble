@@ -25,7 +25,7 @@ class CameraWidget:
         self.main_config = main_config
         self.cam_id = widget_id
         self.settings_config = main_config.settings
-        self.config = main_config.cam
+        self.config = main_config.cam # Bruh wtf is this. I get that they wanted to split it into smaller configs. but just calling this as "config" is confusing
         self.settings = main_config.settings
         self.camera_list = list_camera_names()
         self.maybe_image = None

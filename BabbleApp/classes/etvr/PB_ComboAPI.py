@@ -1,19 +1,24 @@
 import json
 from multiprocessing import Manager
 from typing import Optional
+from blinker import Signal
+import events
 from fastapi import APIRouter, Query, Request
 import sys
-
-from camera_widget import CameraWidget
 
 import logging
 
 from classes.ThreadManager import ThreadManager
+from config import BabbleConfig
 
 logger = logging.getLogger(__name__)
 
+
+onConfigUpdate: Signal = Signal("When the client want the backend to reload config")
+
+
 class PB_ComboAPI:
-    def __init__(self, babbleCam: CameraWidget, thread_manager: ThreadManager):
+    def __init__(self, babbleCam, thread_manager: ThreadManager):
         self.thread_manager = thread_manager;
         self.running: bool = False
         self.router: APIRouter = APIRouter()
@@ -55,6 +60,11 @@ class PB_ComboAPI:
         self.shutdownFlag = True
         return "ok"
         
+    async def configReloadRequested(self):
+        print("Reloading config")
+        onConfigUpdate.send()
+
+        return "config reloaded"
 
     def add_routes(self) -> None:
         # region: Image streaming endpoints
@@ -103,6 +113,13 @@ class PB_ComboAPI:
         )
 
         self.router.add_api_route(
+            name="Makes the backend reload the config",
+            tags=["control"],
+            path="/config/reload",
+            endpoint=self.configReloadRequested,
+            methods=["GET"],
+        )
+        self.router.add_api_route(
             name="Force shutdowns the babble process",
             tags=["control"],
             path="/shutdown",
@@ -116,3 +133,6 @@ class PB_ComboAPI:
 
     def __repr__(self) -> str:
         return f"<Babble backend running={self.running}>"
+
+
+apiInstance: PB_ComboAPI | None = None

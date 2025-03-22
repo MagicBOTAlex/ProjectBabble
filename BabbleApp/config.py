@@ -66,9 +66,11 @@ class BabbleConfig(BaseModel):
         ensurePath()
 
         if not os.path.exists(CONFIG_FILE_NAME):
+            print("Config loaded")
             return BabbleConfig()
         try:
             with open(CONFIG_FILE_NAME, "r") as settings_file:
+                print("Config loaded")
                 return BabbleConfig(**json.load(settings_file))
         except json.JSONDecodeError:
             load_config = None
@@ -80,6 +82,7 @@ class BabbleConfig(BaseModel):
                     pass
             if load_config is None:
                 load_config = BabbleConfig()
+                print("Config loaded")
             return load_config
 
     def save(self):

@@ -17,6 +17,9 @@ from utils.misc_utils import get_camera_index_by_name, list_camera_names, os_typ
 
 from vivefacialtracker.vivetracker import ViveTracker
 from vivefacialtracker.camera_controller import FTCameraController
+from classes.etvr.PB_ComboAPI import onConfigUpdate
+
+
 
 WAIT_TIME = 0.1
 BUFFER_SIZE = 32768
@@ -71,6 +74,12 @@ class Camera:
         self.FRAME_SIZE = [0, 0]
 
         self.error_message = f'{Fore.YELLOW}[WARN] info.enterCaptureOne {{}} info.enterCaptureTwo{Fore.RESET}'
+
+        onConfigUpdate.connect(self.onReloadConfig)
+
+    def onReloadConfig(self, sender):
+        self.config = BabbleConfig.load().cam
+        self.current_capture_source = self.config.capture_source # Why tf does this need to localised like this!??! ight np. It bothers me that both is used
 
     def __del__(self):
         if self.serial_connection is not None:
@@ -200,6 +209,7 @@ class Camera:
             if should_push and not self.capture_event.wait(timeout=0.02): # BLock until requested flag??? this is probs a big limition. talking from UDP on ETVR experience
                 # print(f"run loop done. Should push: {should_push}")
                 continue
+            # print(f"TEST: {self.config}")
             if self.config.capture_source is not None:
                 if isSerial:
                     self.get_serial_camera_picture(should_push)

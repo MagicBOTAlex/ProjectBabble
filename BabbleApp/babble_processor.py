@@ -19,6 +19,7 @@ from osc_calibrate_filter import *
 from tab import CamInfo, CamInfoOrigin
 from babble_model_loader import *
 import os
+from classes.etvr.PB_ComboAPI import onConfigUpdate
 
 os.environ["OMP_NUM_THREADS"] = "1"
 import onnxruntime as ort
@@ -53,11 +54,14 @@ class BabbleProcessor:
         cam_id,
         osc_queue: queue.Queue,
     ):
-        self.main_config = BabbleSettingsConfig
-        self.config = config
-        self.settings = settings
+        # why tf pass the full config, then calling the camera config as "config". this is debugging hell
+        self.main_config = BabbleSettingsConfig # 1. i understand, sure
+        self.config = config # 2. Confusing name
+        self.settings = settings # Huh? i thought this was config
+        self.config_class = fullconfig # ok...
+
         self.cam_id = cam_id
-        self.config_class = fullconfig
+
         # Cross-thread communication management
         self.capture_queue_incoming = capture_queue_incoming
         self.image_queue_outgoing = image_queue_outgoing
@@ -95,6 +99,8 @@ class BabbleProcessor:
         self.val_list = []
         self.calibrate_config = np.empty((1, 45))
         self.min_max_array = np.empty((2, 45))
+
+        onConfigUpdate.connect(self.onReloadConfig)
 
         ort.disable_telemetry_events()
         self.opts = ort.SessionOptions()
@@ -150,6 +156,12 @@ class BabbleProcessor:
         self.one_euro_filter = OneEuroFilter(
             noisy_point, min_cutoff=min_cutoff, beta=beta
         )
+
+    def onReloadConfig(self, sender):
+        fullConfig = BabbleConfig.load()
+        self.config = fullConfig.cam
+        self.settings = fullConfig.settings
+        self.config_class = fullConfig # How is this config class if it holds the full config? WAIT! IT'S NOT EVEN USED. alr, i'm angry
 
     def output_images_and_update(self, output_information: CamInfo):
         try:
@@ -247,12 +259,12 @@ class BabbleProcessor:
             try:
                 if self.capture_queue_incoming.empty():
                     self.capture_event.set()
-                # Wait a bit for images here. If we don't get one, just try again.
-                (
-                    self.current_image,
-                    self.current_frame_number,
-                    self.current_fps,
-                ) = self.capture_queue_incoming.get(block=True, timeout=0.1)
+                    # Wait a bit for images here. If we don't get one, just try again.
+                    (
+                        self.current_image,
+                        self.current_frame_number,
+                        self.current_fps,
+                    ) = self.capture_queue_incoming.get(block=True, timeout=0.1)
             except queue.Empty:
                 # print("No image available")
                 continue

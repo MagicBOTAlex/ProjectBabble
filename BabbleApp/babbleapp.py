@@ -36,7 +36,7 @@ from assets.images import IMAGES_DIR
 from babble_model_loader import *
 from camera_widget import CameraWidget
 from classes.ThreadManager import ThreadManager
-from classes.etvr.PB_ComboAPI import PB_ComboAPI
+from classes.etvr.PB_ComboAPI import PB_ComboAPI, apiInstance
 from config import BabbleConfig
 from tab import Tab
 from osc import VRChatOSCReceiver, VRChatOSC
@@ -55,6 +55,7 @@ logging.basicConfig(
 
 
 winmm = None
+config: BabbleConfig = BabbleConfig.load()
 
 if os_type == "Windows":
     try:
@@ -124,13 +125,12 @@ def gracefulShutdown():
     os.kill(os.getpid(), signal.SIGINT)
     thread_manager.shutdown_all()
 
+
 async def async_main():
     ensurePath()
     setup_logging()
 
-    # Get Configuration
-    config: BabbleConfig = BabbleConfig.load()
-
+    global config
     config.save()
 
     # Uncomment for low-level Vive Facial Tracker logging
@@ -151,6 +151,7 @@ async def async_main():
         CameraWidget(Tab.CAM, config, osc_queue, thread_manager),
     ]
     babbleCam = cams[0] # Hopefully python fucking passes by ref here
+    app, babble_app = setup_app(babbleCam, thread_manager)
 
     settings = [
         SettingsWidget(Tab.SETTINGS, config, osc_queue),
@@ -175,8 +176,6 @@ async def async_main():
             target=osc_receiver.run, name="OSCReceiverThread"
         )
         thread_manager.add_thread(osc_receiver_thread, shutdown_obj=osc_receiver)
-
-    app, babble_app = setup_app(babbleCam, thread_manager)
 
     # Run the main loop
     await main_loop(app, babble_app)
