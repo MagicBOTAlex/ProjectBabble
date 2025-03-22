@@ -96,6 +96,7 @@ class CameraWidget:
         # self.babble_landmark_thread.start()
         self.camera_thread = Thread(target=self.camera.run)
         self.thread_manager.add_thread(self.camera_thread)
+        print("Started camera thread")
         
 
     def stop(self):
@@ -106,8 +107,3 @@ class CameraWidget:
         self.babble_cnn_thread.join()
         # self.babble_landmark_thread.join()
         self.camera_thread.join()
-
-    def render(self, window):
-        (maybe_image, cam_info) = self.image_queue.get(block=False)
-        imgbytes = cv2.imencode(".ppm", maybe_image)[1].tobytes()
-        window[self.gui_tracking_image].update(data=imgbytes)

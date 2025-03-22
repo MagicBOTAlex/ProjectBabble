@@ -22,13 +22,13 @@ class PB_ComboAPI:
         self.shutdownFlag = False;
 
     async def raw_feed(self):
-        return self.babbleCam.babble_cnn.raw_visualizer.video_feed()
+        return self.babbleCam.babble_cnn.raw_visualizer.video_feed(self.thread_manager.cancellation_event)
     
     async def cropped_feed(self):
-        return self.babbleCam.cropped_visualizer.video_feed()
+        return self.babbleCam.cropped_visualizer.video_feed(self.thread_manager.cancellation_event)
 
     async def processed_feed(self):
-        return self.babbleCam.babble_cnn.processed_visualizer.video_feed()
+        return self.babbleCam.babble_cnn.processed_visualizer.video_feed(self.thread_manager.cancellation_event)
     
     async def startCalibration(self, caliSamples: Optional[int] = None):
         if caliSamples is not None:

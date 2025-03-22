@@ -233,6 +233,7 @@ class BabbleProcessor:
             pass
 
     def run(self):
+        print("Processor loop")
 
         while True:
             # Check to make sure we haven't been requested to close
@@ -259,7 +260,7 @@ class BabbleProcessor:
                     self.current_fps,
                 ) = self.capture_queue_incoming.get(block=True, timeout=0.1)
             except queue.Empty:
-                # print("No image available")
+                print("No image available")
                 continue
 
             if not self.capture_crop_rotate_image():

@@ -1,3 +1,5 @@
+from threading import Thread
+import threading
 import cv2
 import os.path
 from typing import Any
@@ -12,9 +14,10 @@ class Visualizer:
     def __init__(self, image_queue: Queue):
         self.image_queue: Queue = image_queue
         self.running: bool = True
+        self.shutdownToken: threading.Event | None = None
 
     def gen_frame(self):
-        while self.running:
+        while self.running and not self.shutdownToken.is_set():
             try:
                 frame = self.image_queue.get(timeout=1)[0]
             except Exception:
@@ -22,7 +25,8 @@ class Visualizer:
             ret, frame = cv2.imencode(".jpg", frame)
             yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + bytearray(frame) + b"\r\n")
 
-    def video_feed(self) -> StreamingResponse:
+    def video_feed(self, shutdownToken: threading.Event) -> StreamingResponse:
+        self.shutdownToken = shutdownToken
         return StreamingResponse(self.gen_frame(), media_type="multipart/x-mixed-replace; boundary=frame")
 
     def stop(self):
